@@ -1,20 +1,166 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>DAM CRM - Gestión de Clientes</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding">
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+  <!-- PANTALLA INICIAL -->
+  @if (modo === 'inicio') {
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Selecciona cómo acceder</ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-button type="button" expand="block" [disabled]="isChangingMode" (click)="abrirLogin()">
+        Iniciar sesión como administrador
+      </ion-button>
+
+      <ion-button type="button" expand="block" fill="outline" [disabled]="isChangingMode" (click)="entrarSoloLectura()">
+        {{ isChangingMode ? 'Entrando...' : 'Entrar en modo solo lectura' }}
+      </ion-button>
+
+      <ion-button type="button" routerLink="/galeria" expand="block" [disabled]="isChangingMode">
+        Ver galería
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+  }
+
+  <!-- LOGIN DE ADMINISTRADOR -->
+  @if (modo === 'login') {
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Acceso de administrador</ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="iniciarSesion()">
+        <ion-item>
+          <ion-label position="stacked">
+            Correo electrónico
+          </ion-label>
+          <ion-input type="email" autocomplete="username" formControlName="email">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Contraseña</ion-label>
+          <ion-input type="password" autocomplete="current-password" formControlName="password">
+          </ion-input>
+        </ion-item>
+
+        <ion-button type="submit" expand="block" [disabled]="loginForm.invalid || isLoggingIn || isChangingMode">
+          {{ isLoggingIn ? 'Entrando...' : 'Iniciar sesión' }}
+        </ion-button>
+      </form>
+
+      <ion-button type="button" fill="clear" [disabled]="isLoggingIn || isChangingMode" (click)="volverInicio()">
+        Volver
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+  }
+
+  <!-- CONTENIDO PARA LECTURA O ADMINISTRACIÓN -->
+  @if (modo === 'lectura' || modo === 'admin') {
+  <p>
+    {{ puedeModificar ? 'Modo administrador' : 'Modo solo lectura' }}
+  </p>
+
+  <ion-button type="button" fill="outline" [disabled]="isChangingMode || isSaving" (click)="volverInicio()">
+    {{ isChangingMode ? 'Saliendo...' : 'Salir' }}
+  </ion-button>
+
+  <!-- FORMULARIO PARA ADMINISTRADORES -->
+  @if (puedeModificar) {
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        {{ editingClientId ? 'Editar cliente' : 'Nuevo cliente' }}
+      </ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <form [formGroup]="clientForm" (ngSubmit)="saveClient()">
+        <ion-item>
+          <ion-label position="stacked">Nombre</ion-label>
+          <ion-input type="text" formControlName="nombre" [readonly]="isSaving">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Ciudad</ion-label>
+          <ion-input type="text" formControlName="ciudad" [readonly]="isSaving">
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Fecha de alta</ion-label>
+          <ion-input type="date" formControlName="fecha_alta" [readonly]="isSaving">
+          </ion-input>
+        </ion-item>
+
+        <div class="ion-margin-top">
+          <ion-button type="submit" expand="block" [disabled]="clientForm.invalid || isSaving || isChangingMode">
+            {{ isSaving ? 'Guardando...' : editingClientId ? 'Actualizar' : 'Guardar' }}
+          </ion-button>
+
+          @if (editingClientId) {
+          <ion-button type="button" fill="clear" expand="block" color="medium" [disabled]="isSaving || isChangingMode"
+            (click)="resetForm()">
+            Cancelar
+          </ion-button>
+          }
+        </div>
+      </form>
+    </ion-card-content>
+  </ion-card>
+  }
+
+  <!-- LISTADO: UNA FILA POR CLIENTE -->
+  <h3>Listado de clientes</h3>
+
+  <ion-list>
+    @for (client of clients; track client.id) {
+    <ion-item-sliding>
+      <ion-item>
+        <ion-label>
+          <h2>{{ client.nombre }}</h2>
+          <p>Ciudad: {{ client.ciudad }}</p>
+          <p>Fecha de alta: {{ client.fecha_alta }}</p>
+        </ion-label>
+
+        @if (puedeModificar) {
+        <ion-button type="button" slot="end" [disabled]="isSaving || isChangingMode" (click)="editClient(client)">
+          Editar
+        </ion-button>
+        }
+      </ion-item>
+
+      @if (puedeModificar) {
+      <ion-item-options side="end">
+        <ion-item-option color="danger" [disabled]="isSaving || isChangingMode" (click)="deleteClient(client.id!)"
+          aria-label="Eliminar cliente">
+          <ion-icon slot="icon-only" name="trash-outline">
+          </ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+      }
+    </ion-item-sliding>
+    } @empty {
+    <ion-item>
+      <ion-label color="medium">
+        No hay clientes disponibles.
+      </ion-label>
+    </ion-item>
+    }
+  </ion-list>
+  }
+
+  <ion-toast [isOpen]="isToastOpen" [message]="toastMessage" [duration]="2000" (didDismiss)="setToastOpen(false)">
+  </ion-toast>
+
 </ion-content>

@@ -1,0 +1,40 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title>Galería de imágenes</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading()) {
+  <div class="estado">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando imágenes...</p>
+  </div>
+  } @else if (error()) {
+  <p class="estado error" role="alert">{{ error() }}</p>
+  } @else {
+  <ion-grid>
+    <ion-row>
+      @for (imagen of imagenes(); track imagen.url) {
+      <ion-col size="12" size-md="6" size-lg="4">
+        <ion-card>
+          <img [src]="imagen.url" [alt]="imagen.nombre" loading="lazy">
+
+          <ion-card-content>
+            {{ imagen.nombre }}
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+      } @empty {
+      <ion-col size="12">
+        <p class="estado">No hay imágenes disponibles.</p>
+      </ion-col>
+      }
+    </ion-row>
+  </ion-grid>
+  }
+</ion-content>
